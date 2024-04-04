@@ -4,8 +4,20 @@ from time import sleep
 import ntptime
 import machine
 import urequests as requests
+import asyncio
+import output
 
 host = "http://worldtimeapi.org/api/timezone/America/New_York"
+
+## i2c
+sdaPIN=machine.Pin(0)
+sclPIN=machine.Pin(1)
+i2c=machine.I2C(0,sda=sdaPIN, scl=sclPIN, freq=400000)
+devices = i2c.scan() # debugging
+while(devices < 1):
+    sleep(1)
+
+
 
 def connect():
     wlan = network.WLAN(network.STA_IF)
@@ -14,8 +26,8 @@ def connect():
     while wlan.isconnected() == False:
         sleep(1)
         
- 
-def syncTime():
+
+async def syncTime():
     try:
         current = requests.get(url=host).json()["datetime"]
         #current = current.json()["datetime"]
@@ -32,16 +44,38 @@ def syncTime():
         ntptime.settime()
     
     
-def autoCalibrate():
-    try:
-        syncTime()
-    except:
-        machine.RTC.now() #use whatever time the controller thinks it is
-    
+async def autoCalibrate():
+    while(True):
+        try:
+            await syncTime()
+        except:
+            machine.RTC.now() #use whatever time the controller thinks it is
         
+        asyncio.sleep(7*24*60*60) # sleeps task for a week
+
+
+
+## Main ##################################################################################################################
+def main():
+    asyncio.create_task(autoCalibrate)
+    asyncio.sleep(10) # giving RTC time to sync
+    while(True):
+        minute, hour = machine.RTC.datetime()[-4:-2]
+        i2c.start()
+        i2c.write(minute) # writes minutes to i2c bus
+        i2c.stop()
+        
+        output.writeOutput(hour)
+        
+        sleep(10)
+
+
 ## Reboot if no internet
 try:
     connect()
 except KeyboardInterrupt:
-    machine.reset()
+    machine.reset()    
 
+
+if __name__ == "__main__":
+    main()
