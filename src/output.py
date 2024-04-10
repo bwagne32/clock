@@ -1,6 +1,6 @@
 #Subject to change depending on 12 hr/24 hr time
 
-from machine import pin
+#from machine import pin
 
 pin = {
     4,
