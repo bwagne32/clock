@@ -1,25 +1,15 @@
 #Subject to change depending on 12 hr/24 hr time
 
-#from machine import pin
+from machine import Pin
+from main import DEBUG
 
-pin = {
-    4,
-    5,
-    6,
-    7,
-    #8, GND
-    9,
-    10,
-    11,
-    12,
-    #13, GND
-    14,
-    15,
-    16,
-    17,
-    
-    
-}
+lastHour = 0
+
+flushPins = [] # Pin outputs for flushing every hour
+
+setupPins = [] # Pin numbers used
+
+controlPins = [] # holds pin objects
 
 outputTable = { # idk which solenoids to activate yet
     1:[],
@@ -36,9 +26,24 @@ outputTable = { # idk which solenoids to activate yet
     12:[],
 }
 
+def setup():
+    for i in range(0,len(setupPins)):
+        controlPins[i] = Pin(0,Pin.OUT)
 
-def writeOutput(hour: int): # In testing while I figure out how picos work
-    p0 = pin(0,pin.OUT) 
-    p0.value(1)
+def flush() -> None:
+    for i in range(0,len(controlPins)):
+            controlPins[i].value(flushPins[i])
+
+
+def writeOutput(hour: int, minute: int) -> None: # In testing while segment control is finalized
+    if DEBUG: print(f"Received: {hour}")
+    if(minute == 59):
+        flush()
+    elif(lastHour != hour):
+        for i in range(0,len(controlPins)):
+            controlPins[i].value(outputTable[hour][i])
+        lastHour = hour
+            
+    
     
     

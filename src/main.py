@@ -7,8 +7,6 @@ import machine
 import uasyncio as asyncio
 import output
 
-host = "http://worldtimeapi.org/api/timezone/America/New_York"
-
 DEBUG = True
 
 
@@ -25,14 +23,14 @@ while(I2C_ENABLE and len(devices) < 1):
 
 
 
-def connect():
+def connect() -> bool:
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
     wlan.connect(credentials.SSID,credentials.PASSWORD)
     while wlan.isconnected() == False:
         sleep(1)
+    return wlan.isconnected()
         
-
 async def syncTime() -> None:
     try:
         ntp.set_time(ntp.host1)
@@ -45,7 +43,9 @@ async def autoCalibrate():
     while(True):
         try:
             await syncTime()
+            if DEBUG: print("Synchronized successfully")
         except:
+            if DEBUG: print("Failed to sync")
             pass #use whatever time the controller thinks it is
         if DEBUG:
             print("done")
@@ -59,7 +59,6 @@ async def main() -> None:
     asyncio.create_task(autoCalibrate())
     asyncio.sleep(10) # giving RTC time to sync
     while(True):
-        
         hour, minute = time.localtime()[3:5]
         hour = (hour - 4) % 12
         print(f"{hour}:{minute}")
@@ -69,9 +68,14 @@ async def main() -> None:
         except:
             if DEBUG: print("i2c failed") # debugging
             ...
-        output.writeOutput(hour)
+            
+        
+        output.writeOutput(hour,minute)
         
         sleep(1)
+
+
+
 
 
 ## Reboot if no internet
@@ -80,5 +84,6 @@ try:
 except KeyboardInterrupt:
     machine.reset()    
 
+output.setup()
 
 asyncio.run(main())
