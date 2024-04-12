@@ -9,15 +9,19 @@ import output
 
 host = "http://worldtimeapi.org/api/timezone/America/New_York"
 
-'''
+DEBUG = True
+
+
 ## i2c
+I2C_ENABLE = False
 sdaPIN=machine.Pin(0)
 sclPIN=machine.Pin(1)
-i2c=machine.I2C(0,sda=sdaPIN, scl=sclPIN, freq=400000)
+slaveAddr = 0x30
+i2c=machine.I2C(0,sda=sdaPIN, scl=sclPIN, freq=100_000)
 devices = i2c.scan() # debugging
-while(devices < 1):
+while(I2C_ENABLE and len(devices) < 1):
     sleep(1)
-    '''
+    
 
 
 
@@ -43,29 +47,30 @@ async def autoCalibrate():
             await syncTime()
         except:
             pass #use whatever time the controller thinks it is
-        
-        print("done")
-        print(time.localtime())
+        if DEBUG:
+            print("done")
+            print(time.localtime())
         asyncio.sleep(7*24*60*60) # sleeps task for a week
 
 
 
 ## Main ##################################################################################################################
-async def main():
+async def main() -> None:
     asyncio.create_task(autoCalibrate())
     asyncio.sleep(10) # giving RTC time to sync
     while(True):
-        #minute, hour = machine.RTC.datetime()[-4:-2]
-        '''
-        i2c.start()
-        i2c.write(minute) # writes minutes to i2c bus
-        i2c.stop()
         
+        hour, minute = time.localtime()[3:5]
+        hour = (hour - 4) % 12
+        print(f"{hour}:{minute}")
+        try:
+            acks = i2c.writeto(slaveAddr,bytes(minute))
+            if DEBUG: print(f"Sent: {minute}\nReceived: {acks}") # debugging
+        except:
+            if DEBUG: print("i2c failed") # debugging
+            ...
         output.writeOutput(hour)
-        '''
-        hours, minutes = time.localtime()[3:5]
-        hours = (hours - 4) % 12
-        print(f"{hours}:{minutes}")
+        
         sleep(1)
 
 
