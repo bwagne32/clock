@@ -6,6 +6,7 @@ import ntp
 import machine
 import uasyncio as asyncio
 import output
+from lookup import i2cMessage
 
 DEBUG = True
 
@@ -61,12 +62,16 @@ async def main() -> None:
     while(True):
         hour, minute = time.localtime()[3:5]
         hour = (hour - 4) % 12
-        print(f"{hour}:{minute}")
+        if DEBUG: print(f"{hour}:{minute}")
+        
+        flush = [0,0]
+        
+        
         try:
-            acks = i2c.writeto(slaveAddr,bytes(minute))
-            if DEBUG: print(f"Sent: {minute}\nReceived: {acks}") # debugging
-        except:
-            if DEBUG: print("i2c failed") # debugging
+            acks = i2c.writeto(slaveAddr,i2cMessage(minute,flush))
+            if DEBUG: print(f"Sent: {minute}\nReceived: {acks}") 
+        except: # so the controller doesn't crash
+            if DEBUG: print("i2c failed")
             ...
             
         

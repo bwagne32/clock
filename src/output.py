@@ -2,29 +2,10 @@
 
 from machine import Pin
 from main import DEBUG
+from lookup import flushPins, setupPins, controlPins, outputTable
 
 lastHour = 0
 
-flushPins = [] # Pin outputs for flushing every hour
-
-setupPins = [] # Pin numbers used
-
-controlPins = [] # holds pin objects
-
-outputTable = { # idk which solenoids to activate yet
-    1:[],
-    2:[],
-    3:[],
-    4:[],
-    5:[],
-    6:[],
-    7:[],
-    8:[],
-    9:[],
-    10:[],
-    11:[],
-    12:[],
-}
 
 def setup():
     for i in range(0,len(setupPins)):
