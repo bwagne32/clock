@@ -8,8 +8,8 @@ lastHour = 0
 
 
 def setup():
-    for i in range(0,len(setupPins)):
-        controlPins[i] = Pin(0,Pin.OUT)
+    for i in range(0,setupPins):
+        controlPins.append(Pin(i,Pin.OUT))
 
 def flush() -> None:
     for i in range(0,len(controlPins)):

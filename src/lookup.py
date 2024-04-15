@@ -1,25 +1,76 @@
 
 ### Output.py ###########################################################################
 
-flushPins = [] # Pin outputs for flushing every hour
-
-setupPins = [] # Pin numbers used
+setupPins = [           # Pin numbers used
+    3,2,                # segment 1 in segment control order
+    11,10,9,8,4,5,6,7   # segment 2 in segment control order
+             ]          
 
 controlPins = [] # holds pin objects
 
-outputTable = { # idk which solenoids to activate yet
-    1:[],
-    2:[],
-    3:[],
-    4:[],
-    5:[],
-    6:[],
-    7:[],
-    8:[],
-    9:[],
-    10:[],
-    11:[],
-    12:[],
+'''
+    --1--
+   |     |    
+   6     2   
+   |     |     
+    --7--
+   |     |    
+   5     3   
+   |     |     
+    --4--
+
+// On the solenoid driver board...
+// S1 pin 3 #
+// S2 pin 5 #
+// S3 pin 7 #
+// S4 pin 9 #
+// S5 pin 4 #
+// S6 pin 6 #
+// S7 pin 8 #
+// S8 pin 10 Flush
+'''
+flushPins = [             # Pin outputs for flushing every hour
+    0,1,
+    0,0,0,0,0,0,0,1
+    ] 
+
+outputTable = {           # idk which solenoids to activate yet
+    1:[0,1, # flushed
+       0,1,1,0,0,0,0,0
+       ],
+    2:[0,1, # flushed
+       1,1,0,1,1,0,1,0
+       ],
+    3:[0,1, # flushed
+       1,1,1,1,0,0,1,0
+       ], 
+    4:[0,1, # flushed
+       0,1,1,0,0,1,1,0
+       ],
+    5:[0,1, # flushed
+       1,0,1,1,0,1,1,0
+       ],
+    6:[0,1, # flushed
+       1,0,1,1,1,1,1,0
+       ],
+    7:[0,1, # flushed
+       1,1,1,0,0,0,0,0
+       ],
+    8:[0,1, # flushed
+       1,1,1,1,1,1,1,0
+       ],
+    9:[0,1, # flushed
+       1,1,1,0,0,1,1,0
+       ],
+    10:[1,0,
+        1,1,1,1,1,1,0,0
+        ],
+    11:[1,0,
+        0,1,1,0,0,0,0,0        
+        ],
+    12:[1,0,
+        1,1,0,1,1,0,1,0
+        ],
 }
 
 ### i2c #################################################################################
@@ -55,20 +106,20 @@ outputTable = { # idk which solenoids to activate yet
 
 '''
     
-slaveTable ={
+slaveTable = { # This could have the efficiency improved, but it'll be easier to debug in this form
     #:[1,2,3,4,5,6,7]
     0:[1,1,1,1,1,1,0],
     1:[0,1,1,0,0,0,0],
     2:[1,1,0,1,1,0,1],
     3:[1,1,1,1,0,0,1],
-    4:[0,1,1,1,0,0,1],
+    4:[0,1,1,0,0,1,1],
     5:[1,0,1,1,0,1,1],
     6:[1,0,1,1,1,1,1],
     7:[1,1,1,0,0,0,0],
     8:[1,1,1,1,1,1,1],
     9:[1,1,1,0,0,1,1]
 }
-    
+
 def i2cMessage(minute: int,flush:list)->bytearray: # flush[0] flushes both segments. flush[1] flushes minutes
     array = [0,0]
     tens = int(minute / 10)
