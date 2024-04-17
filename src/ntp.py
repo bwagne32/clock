@@ -7,6 +7,16 @@ import struct
 
 NTP_DELTA = 2208988800
 host1 = "10.128.10.30"
+host2 = "10.128.10.31"#import network
+import socket
+import time
+import struct
+
+from machine import Pin
+import machine
+
+NTP_DELTA = 2208988800
+host1 = "10.128.10.30"
 host2 = "10.128.10.31"
 
 led = Pin("LED", Pin.OUT)

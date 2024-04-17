@@ -1,12 +1,46 @@
 
+from machine import Pin
+
+DEBUG = True
+
 ### Output.py ###########################################################################
 
-setupPins = [           # Pin numbers used
-    3,2,                # segment 1 in segment control order
-    11,10,9,8,4,5,6,7   # segment 2 in segment control order
-             ]          
+tensPins = [3,2]                    # segment 1 in segment control order
+onesPins = [11,10,9,8,4,5,6,7]      # segment 2 in segment control order
 
-controlPins = [] # holds pin objects
+
+class segment:
+    def __init__(self,seg1="LED",seg2="LED",seg3="LED",seg4="LED",seg5="LED",seg6="LED",seg7="LED",flush="LED"):
+        self.S1 = Pin(seg1,Pin.OUT)
+        self.S2 = Pin(seg2,Pin.OUT)
+        self.S3 = Pin(seg3,Pin.OUT)
+        self.S4 = Pin(seg4,Pin.OUT)
+        self.S5 = Pin(seg5,Pin.OUT)
+        self.S6 = Pin(seg6,Pin.OUT)
+        self.S7 = Pin(seg7,Pin.OUT)
+        self.S8 = Pin(flush,Pin.OUT) # Flush
+        if DEBUG: print([self.S1, self.S2,self.S3,self.S4,self.S5,self.S6,self.S7,self.S8])
+        
+    def out(self,array:list):       # For filling segments only
+        self.S1.value(array[0])
+        self.S2.value(array[1])
+        self.S3.value(array[2])
+        self.S4.value(array[3])
+        self.S5.value(array[4])
+        self.S6.value(array[5])
+        self.S7.value(array[6])
+        self.S8.off()               # Should not be flushing
+        if DEBUG: print(f"Wrote: {array}")
+        
+    def flush(self):                # Flushes all segments
+        self.S1.off()
+        self.S2.off()
+        self.S3.off()
+        self.S4.off()
+        self.S5.off()
+        self.S6.off()
+        self.S7.off()
+        self.S8.on()
 
 '''
     --1--
@@ -29,48 +63,43 @@ controlPins = [] # holds pin objects
 // S7 pin 8 #
 // S8 pin 10 Flush
 '''
-flushPins = [             # Pin outputs for flushing every hour
-    0,1,
-    0,0,0,0,0,0,0,1
-    ] 
 
-outputTable = {           # idk which solenoids to activate yet
-    1:[0,1, # flushed
+tensTable = {#  S1,S2,S3,S4,S5,S6,S7,S8
+             0:[ 0, 0, 0, 0, 0, 0, 0, 1],
+             1:[ 0, 0, 0, 1, 0, 0, 0, 0]
+             }
+
+onesTable = {           # idk which solenoids to activate yet
+    1:[
        0,1,1,0,0,0,0,0
        ],
-    2:[0,1, # flushed
+    2:[
        1,1,0,1,1,0,1,0
        ],
-    3:[0,1, # flushed
+    3:[
        1,1,1,1,0,0,1,0
        ], 
-    4:[0,1, # flushed
+    4:[
        0,1,1,0,0,1,1,0
        ],
-    5:[0,1, # flushed
+    5:[
        1,0,1,1,0,1,1,0
        ],
-    6:[0,1, # flushed
+    6:[
        1,0,1,1,1,1,1,0
        ],
-    7:[0,1, # flushed
+    7:[
        1,1,1,0,0,0,0,0
        ],
-    8:[0,1, # flushed
+    8:[
        1,1,1,1,1,1,1,0
        ],
-    9:[0,1, # flushed
+    9:[
        1,1,1,0,0,1,1,0
        ],
-    10:[1,0,
+    0:[
         1,1,1,1,1,1,0,0
-        ],
-    11:[1,0,
-        0,1,1,0,0,0,0,0        
-        ],
-    12:[1,0,
-        1,1,0,1,1,0,1,0
-        ],
+        ]
 }
 
 ### i2c #################################################################################
