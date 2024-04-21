@@ -64,7 +64,13 @@ async def main() -> None:
     #uping.ping('10.128.10.30')
     while(True):
         hour, minute, sec = time.localtime()[3:6]
-        hour = (hour - 4) % 12
+        hour -= 4 # NTP server was 4 hours off for some reason
+        
+        if hour > 12: hour -= 12 # PM
+        elif hour == 0: hour = 12 # incase midnight is treated as 0
+        
+        
+        
         if DEBUG: print(f"{hour}:{minute}")
         
         flush = [0,0]
