@@ -71,9 +71,12 @@ async def main() -> None:
         
         
         
-        if DEBUG: print(f"{hour}:{minute}")
+        if DEBUG: print(f"{hour}:{minute}")        
         
-        flush = [0,0]
+        flush = [False, False]
+        if minute == 9 and sec > 45: flush = [True,True]    # Flush tens place
+        elif sec > 45: flush[1] = True                      # Flush ones place
+        
         
         try:
             acks = i2c.writeto(slaveAddr,i2cMessage(minute,flush))
