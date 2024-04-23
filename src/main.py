@@ -19,7 +19,7 @@ sdaPIN=machine.Pin(0)
 sclPIN=machine.Pin(1)
 
 
-slaveAddr = 0x30
+tentacle = 0x30                                         # Pico GPIO expender
 i2c=machine.I2C(0,sda=sdaPIN, scl=sclPIN, freq=100_000)
 devices = i2c.scan() # debugging
 while(I2C_ENABLE and len(devices) < 1):
@@ -90,12 +90,12 @@ async def main() -> None:
         if DEBUG: print(f"{hour}:{minute}")        
         
         flush = [False, False]
-        if minute == 9 and sec > 45: flush = [True,True]    # Flush tens place
+        if minute == 9 and sec > 45: flush = [True,True]    # Flush tens and ones places
         elif sec > 45: flush[1] = True                      # Flush ones place
         
         
         try:
-            acks = i2c.writeto(slaveAddr,i2cMessage(minute,flush))
+            acks = i2c.writeto(tentacle,i2cMessage(minute,flush))
             if DEBUG: print(f"Sent: {minute}\nReceived: {acks}") 
         except: # so the controller doesn't crash
             if DEBUG: print("i2c failed")

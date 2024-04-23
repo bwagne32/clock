@@ -134,7 +134,7 @@ onesTable = {           # idk which solenoids to activate yet
 
 '''
     
-slaveTable = { # This could have the efficiency improved, but it'll be easier to debug in this form
+tentacleTable = { # This could have the efficiency improved, but it'll be easier to debug in this form
     #:[1,2,3,4,5,6,7]
     0:[1,1,1,1,1,1,0],
     1:[0,1,1,0,0,0,0],
@@ -157,13 +157,13 @@ def i2cMessage(minute: int,flush:list)->bytearray: # flush[0] flushes both segme
         array = [128,128]
     elif(flush[1]): # flush ones
         array[1] = 128 
-        for i in slaveTable[tens]: 
+        for i in tentacleTable[tens]: 
             array[0] = (array[0] << 1) | i
     else:
-        for i in slaveTable[tens]: 
+        for i in tentacleTable[tens]: 
             array[0] = (array[0] << 1) | i
             
-        for i in slaveTable[ones]: 
+        for i in tentacleTable[ones]: 
             array[1] = (array[1] << 1) | i
     
     return bytearray(array)
