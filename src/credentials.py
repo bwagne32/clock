@@ -1,2 +1,2 @@
-SSID = "Your SSID here"
-PASSWORD = "Your Wifi password"
+SSID = "Multimedia Devices"
+PASSWORD = ""
