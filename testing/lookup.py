@@ -40,6 +40,7 @@ class segment:
         self.S6.off()
         self.S7.off()
         self.S8.on()
+        if DEBUG: print("Wrote: [0,0,0,0,0,0,0,1]")
     
     def close(self):
         self.S1.off()
@@ -50,6 +51,7 @@ class segment:
         self.S6.off()
         self.S7.off()
         self.S8.off()
+        if DEBUG: print("Wrote: [0,0,0,0,0,0,0,0]")
 
 '''
     --1--

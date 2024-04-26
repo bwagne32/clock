@@ -71,8 +71,14 @@ async def main() -> None:
     #uping.ping('10.128.10.30')
     while(True):
         
-        command = input("What output: ")
-        command = convertInput[command]
+        try: command = input("What output (flush,close,zero,one,two...): ")
+        except: command = 'close'
+        
+        try: command = convertInput[command]
+        except:
+            print("Invalid input")
+            continue    
+        
         
         if command == 'close':
             try: acks = i2c.writeto(tentacle,bytearray([0,0]))
@@ -87,7 +93,8 @@ async def main() -> None:
             tens.flush()
             print("Flushed")
         else:
-            acks = i2c.writeto(tentacle,i2cMessage(command,[0,0]))
+            try: acks = i2c.writeto(tentacle,i2cMessage(command,[0,0]))
+            except: pass
             ones.out(onesTable[command])
             if command in tensTable:
                 tens.out(tensTable[command])
