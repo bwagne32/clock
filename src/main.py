@@ -88,7 +88,7 @@ async def i2cOutput(minute, sec):
         if DEBUG: print("i2c failed")
 
     if not flush[1]:
-        asyncio.sleep((drainTimer[int(minute/10)] + drainTimer[int(minute%10)]) / 2)
+        asyncio.sleep((fillTimer[int(minute/10)] + fillTimer[int(minute%10)]) / 2)
         try:
             acks = i2c.writeto(tentacle,bytearray([0,0]))   # closing all solenoids
             if DEBUG: print(f"Sent close command. Acks: ") 
