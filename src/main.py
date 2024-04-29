@@ -6,7 +6,7 @@ import ntp
 import machine
 import uasyncio as asyncio
 import output
-from output import leaking, dontLeak
+from output import leaking, dontLeak, fillTimer, drainTimer
 from lookup import i2cMessage, DEBUG
 import uping
 
@@ -14,17 +14,6 @@ import uping
 
 daylightSavings = False
 
-## i2c
-I2C_ENABLE = False
-sdaPIN=machine.Pin(0)
-sclPIN=machine.Pin(1)
-
-
-tentacle = 0x30                                         # Pico GPIO expender
-i2c=machine.I2C(0,sda=sdaPIN, scl=sclPIN, freq=100_000)
-devices = i2c.scan() # debugging
-while(I2C_ENABLE and len(devices) < 1):
-    sleep(1)
 
 ## Wifi #####################################################################
 def connect() -> bool:
@@ -68,6 +57,48 @@ def timeChange(dayLightSavings) -> bool: # True if daylight savings else false
         return False
     return dayLightSavings
 
+## i2c #################################################################
+I2C_ENABLE = False
+sdaPIN=machine.Pin(0)
+sclPIN=machine.Pin(1)
+
+
+tentacle = 0x30                                         # Pico GPIO expender
+i2c=machine.I2C(0,sda=sdaPIN, scl=sclPIN, freq=100_000)
+devices = i2c.scan() # debugging
+while(I2C_ENABLE and len(devices) < 1):
+    sleep(1)
+    
+    
+async def i2cOutput(minute, sec):
+    if DEBUG: print("Background i2c task")        
+
+    flush = [False, False]
+    
+    if minute == 9 and sec > 60 - (drainTimer[int(minute/10)] + drainTimer[int(minute%10)]) / 2: 
+        flush = [True,True]    # Flush tens and ones places
+    elif sec > 60 - drainTimer[minute%10]: 
+        flush[1] = True                      # Flush ones place
+    
+    
+    try:
+        acks = i2c.writeto(tentacle,i2cMessage(minute,flush))
+        if DEBUG: print(f"Sent: {minute}\nReceived: {acks}") 
+    except: # so the controller doesn't crash
+        if DEBUG: print("i2c failed")
+
+    if not flush[1]:
+        asyncio.sleep((drainTimer[int(minute/10)] + drainTimer[int(minute%10)]) / 2)
+        try:
+            acks = i2c.writeto(tentacle,bytearray([0,0]))   # closing all solenoids
+            if DEBUG: print(f"Sent close command. Acks: ") 
+        except: # so the controller doesn't crash
+            if DEBUG: print("i2c failed")
+        
+
+
+
+
 ## Main ##################################################################################################################
 async def main() -> None:
     await syncTime()
@@ -78,10 +109,9 @@ async def main() -> None:
         hour, minute, sec = time.localtime()[3:6]
         
         if daylightSavings: 
-            hour -= 4
-        else:
             hour -= 5
-        
+        else:
+            hour -= 4
         
         if hour > 12: hour -= 12 # PM
         elif hour == 0: hour = 12 # incase midnight is treated as 0
@@ -90,24 +120,25 @@ async def main() -> None:
         
         if DEBUG: print(f"{hour}:{minute}")        
         
-        flush = [False, False]
-        if minute == 9 and sec > 45: flush = [True,True]    # Flush tens and ones places
-        elif sec > 45: flush[1] = True                      # Flush ones place
-        
-        
-        try:
-            acks = i2c.writeto(tentacle,i2cMessage(minute,flush))
-            if DEBUG: print(f"Sent: {minute}\nReceived: {acks}") 
-        except: # so the controller doesn't crash
-            if DEBUG: print("i2c failed")
+        asyncio.create_task(i2cOutput(minute, sec))
             
-        
         output.writeOutput(hour,minute,sec)
+        
+        
         
         if leaking():
             dontLeak()
-        
+            
         sleep(1)
+
+
+
+
+
+
+
+
+
 
 
 ## Reboot if no internet

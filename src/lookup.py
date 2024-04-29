@@ -177,3 +177,33 @@ def i2cMessage(minute: int,flush:list)->bytearray: # flush[0] flushes both segme
             array[1] = (array[1] << 1) | i
     
     return bytearray(array)
+
+
+
+### fill/drain timer lookups #################################################################################
+
+fillTimer = {
+    0:10,
+    1:10,
+    2:10,
+    3:10,
+    4:10,
+    5:10,
+    6:10,
+    7:10,
+    8:10,
+    9:10,
+}
+
+drainTimer = {
+    0:15,
+    1:15,
+    2:15,
+    3:15,
+    4:15,
+    5:15,
+    6:15,
+    7:15,
+    8:15,
+    9:15,
+}
