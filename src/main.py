@@ -6,6 +6,7 @@ import ntp
 import machine
 import uasyncio as asyncio
 import output
+from output import leaking, dontLeak
 from lookup import i2cMessage, DEBUG
 import uping
 
@@ -102,6 +103,9 @@ async def main() -> None:
             
         
         output.writeOutput(hour,minute,sec)
+        
+        if leaking():
+            dontLeak()
         
         sleep(1)
 

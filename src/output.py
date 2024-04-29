@@ -25,3 +25,10 @@ def writeOutput(hour: int, minute: int,sec:int) -> None: # In testing while segm
         tens.out(tensTable[int(hour / 10)])
         lastHour = hour
             
+            
+            
+def leaking()->bool:
+    return False
+
+def dontLeak()->None:
+    ...
