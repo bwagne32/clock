@@ -60,7 +60,7 @@ def timeChange(dayLightSavings) -> bool: # True if daylight savings else false
 
 
 ## i2c #################################################################
-I2C_ENABLE = False
+I2C_ENABLE = True
 sdaPIN=machine.Pin(0)
 sclPIN=machine.Pin(1)
 
@@ -70,6 +70,7 @@ i2c=machine.I2C(0,sda=sdaPIN, scl=sclPIN, freq=100_000)
 devices = i2c.scan() # debugging
 if DEBUG: print(f"NUmber of i2c devices found: {devices}")
 while(I2C_ENABLE and len(devices) < 1):
+    if DEBUG: print("Still searching for devices")
     sleep(1)
     
     
@@ -82,7 +83,6 @@ async def i2cOutput(minute, sec):
         flush = [True,True]                                                             # Flush tens and ones places
     elif sec > 60 - drainTimer[minute%10]: 
         flush[1] = True                                                                 # Flush ones place
-    
     
     try:
         acks = i2c.writeto(tentacle,i2cMessage(minute,flush))
