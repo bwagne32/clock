@@ -158,7 +158,7 @@ tentacleTable = { # This could have the efficiency improved, but it'll be easier
     9:[1,1,1,0,0,1,1]
 }
 
-def i2cMessage(minute: int,flush:list)->bytearray: # flush[0] flushes both segments. flush[1] flushes minutes
+def i2cMessage(minute: int,flush:list)->bytearray: # flush[0] flushes both digits. flush[1] flushes ones digit
     array = [0,0]
     tens = int(minute / 10)
     ones = minute % 10

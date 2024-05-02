@@ -57,6 +57,8 @@ def timeChange(dayLightSavings) -> bool: # True if daylight savings else false
         return False
     return dayLightSavings
 
+
+
 ## i2c #################################################################
 I2C_ENABLE = False
 sdaPIN=machine.Pin(0)
@@ -66,6 +68,7 @@ sclPIN=machine.Pin(1)
 tentacle = 0x30                                         # Pico GPIO expender
 i2c=machine.I2C(0,sda=sdaPIN, scl=sclPIN, freq=100_000)
 devices = i2c.scan() # debugging
+if DEBUG: print(f"NUmber of i2c devices found: {devices}")
 while(I2C_ENABLE and len(devices) < 1):
     sleep(1)
     
@@ -75,24 +78,24 @@ async def i2cOutput(minute, sec):
 
     flush = [False, False]
     
-    if minute == 9 and sec > 60 - (drainTimer[int(minute/10)] + drainTimer[int(minute%10)]) / 2: 
-        flush = [True,True]    # Flush tens and ones places
+    if minute == 9 and sec > (60 - (drainTimer[int(minute/10)] + drainTimer[int(minute%10)]) / 2): 
+        flush = [True,True]                                                             # Flush tens and ones places
     elif sec > 60 - drainTimer[minute%10]: 
-        flush[1] = True                      # Flush ones place
+        flush[1] = True                                                                 # Flush ones place
     
     
     try:
         acks = i2c.writeto(tentacle,i2cMessage(minute,flush))
         if DEBUG: print(f"Sent: {minute}\nReceived: {acks}") 
-    except: # so the controller doesn't crash
+    except:                                                                             # so the controller doesn't crash
         if DEBUG: print("i2c failed")
 
-    if not flush[1]:
+    if not flush[1]:                                                                    # leave open for fill timer if not in flushing phase
         asyncio.sleep((fillTimer[int(minute/10)] + fillTimer[int(minute%10)]) / 2)
         try:
-            acks = i2c.writeto(tentacle,bytearray([0,0]))   # closing all solenoids
+            acks = i2c.writeto(tentacle,bytearray([0,0]))                               # closing all solenoids
             if DEBUG: print(f"Sent close command. Acks: ") 
-        except: # so the controller doesn't crash
+        except:                                                                         # so the controller doesn't crash
             if DEBUG: print("i2c failed")
         
 
@@ -104,7 +107,6 @@ async def main() -> None:
     await syncTime()
     asyncio.create_task(autoCalibrate())
         
-    #uping.ping('10.128.10.30')
     while(True):
         hour, minute, sec = time.localtime()[3:6]
         
@@ -126,7 +128,7 @@ async def main() -> None:
         
         
         
-        if leaking():
+        if leaking():   # Water proofing
             dontLeak()
             
         sleep(1)
@@ -146,8 +148,8 @@ try:
     if DEBUG: print("Connecting")
     connect()
 except KeyboardInterrupt:
-    pass # This 
+    pass # This was annoying me so now it's gone
     #machine.reset()    
 
-
+if DEBUG: uping.ping('10.128.10.30') # Test if NTP server is reachable
 asyncio.run(main())
