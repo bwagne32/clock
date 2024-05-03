@@ -99,7 +99,7 @@ async def i2cOutput(minute, sec):
         except:
             pass
         '''
-    if sec > 60 - 20: 
+    if sec > 60 - 30: 
         flush[1] = True                                                                 # Flush ones place
         try:
             acks = i2c.writeto(tentacle, bytearray([128,128]))
