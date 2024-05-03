@@ -7,7 +7,7 @@ from lookup import i2cMessage, DEBUG, convertInput
 
 
 ## i2c
-I2C_ENABLE = False
+I2C_ENABLE = True
 sdaPIN=machine.Pin(0)
 sclPIN=machine.Pin(1)
 
@@ -64,7 +64,7 @@ def timeChange(dayLightSavings) -> bool: # True if daylight savings else false
 ## Main ##################################################################################################################
 async def main() -> None:
     from output import ones, tens
-    from lookup import onesTable, tensTable
+    from lookup import onesTable, tensTable, actualTable
     #await syncTime()
     #asyncio.create_task(autoCalibrate())
     acks = 0
@@ -80,6 +80,7 @@ async def main() -> None:
             continue    
         
         
+        
         if command == 'close':
             try: acks = i2c.writeto(tentacle,bytearray([0,0]))
             except: pass
@@ -93,18 +94,30 @@ async def main() -> None:
             tens.flush()
             print("Flushed")
         else:
-            try: acks = i2c.writeto(tentacle,i2cMessage(command,[0,0]))
+            test1 = onesTable[command]
+            #test2 = tensTable[command]
+            ones.out(test1)
+            
+            i2cConvert = bytearray([actualTable[command],actualTable[command]])
+            try:
+                #msg = i2cMessage(command,[0,0])
+                acks = i2c.writeto(tentacle,i2cConvert)
             except: pass
-            ones.out(onesTable[command])
+            '''
             if command in tensTable:
-                tens.out(tensTable[command])
+                tens.out(test2)
             else:
                 tens.close()
+                '''
             print(f"Wrote: {command}")
             
             
-        print(f'Acks: {acks}')
             
+    
+        #print(f'Acks: {acks}')
+        
+        
+           
 
         
             

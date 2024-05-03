@@ -5,7 +5,7 @@ from lookup import DEBUG, tensPins, onesPins, segment, tensTable, onesTable
 
 lastHour = 0
 
-tens = segment(seg4=tensPins[0],flush=tensPins[1])
+tens = segment(seg2=tensPins[0],flush=tensPins[1])
 ones = segment(seg1=onesPins[0],seg2=onesPins[1],seg3=onesPins[2],seg4=onesPins[3],seg5=onesPins[4],seg6=onesPins[5],seg7=onesPins[6],flush=onesPins[7])
 
 
