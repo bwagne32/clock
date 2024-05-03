@@ -60,7 +60,7 @@ def timeChange(dayLightSavings) -> bool: # True if daylight savings else false
 
 
 ## i2c #################################################################
-I2C_ENABLE = True
+I2C_ENABLE = False
 sdaPIN=machine.Pin(0)
 sclPIN=machine.Pin(1)
 
@@ -110,10 +110,20 @@ async def main() -> None:
     while(True):
         hour, minute, sec = time.localtime()[3:6]
         
-        if daylightSavings: 
-            hour -= 5
+        
+            
+        if daylightSavings:
+            if (hour - 5 < 0):
+                hour = 24 - (5 - hour)
+            else:
+                hour -= 5
         else:
-            hour -= 4
+            if (hour - 4 < 0):
+                hour = 24 - (4 - hour)
+            else:
+                hour -= 4
+        
+        
         
         if hour > 12: hour -= 12 # PM
         elif hour == 0: hour = 12 # incase midnight is treated as 0
@@ -151,5 +161,6 @@ except KeyboardInterrupt:
     pass # This was annoying me so now it's gone
     #machine.reset()    
 
-if DEBUG: uping.ping('10.128.10.30') # Test if NTP server is reachable
+#if DEBUG: uping.ping(host='10.128.10.30',count=3) # Test if NTP server is reachable
+if DEBUG: sleep(1)
 asyncio.run(main())
