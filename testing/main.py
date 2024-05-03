@@ -80,7 +80,7 @@ async def main() -> None:
             continue    
         
         
-        
+    
         if command == 'close':
             try: acks = i2c.writeto(tentacle,bytearray([0,0]))
             except: pass
@@ -102,7 +102,11 @@ async def main() -> None:
             try:
                 #msg = i2cMessage(command,[0,0])
                 acks = i2c.writeto(tentacle,i2cConvert)
+                sleep(2.75)
+                acks = i2c.writeto(tentacle,bytearray([0,0]))
+                ones.close()
             except: pass
+            ones.close()
             '''
             if command in tensTable:
                 tens.out(test2)

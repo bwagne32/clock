@@ -75,7 +75,7 @@ class segment:
 
 tensTable = {#  S1,S2,S3,S4,S5,S6,S7,S8
              0:[ 0, 0, 0, 0, 0, 0, 0, 1],
-             1:[ 0, 0, 0, 1, 0, 0, 0, 0]
+             1:[ 1, 1, 1, 1, 1, 1, 1, 0]
              }
 
 onesTable = {           # idk which solenoids to activate yet
@@ -158,6 +158,20 @@ tentacleTable = { # This could have the efficiency improved, but it'll be easier
     9:[1,1,1,0,0,1,1]
 }
 
+
+actualTable = {
+    0:63,
+    1:6,
+    2:91,
+    3:79,
+    4:102,
+    5:109,
+    6:125,
+    7:7,
+    8:127,
+    9:103
+}
+
 def i2cMessage(minute: int,flush:list)->bytearray: # flush[0] flushes both digits. flush[1] flushes ones digit
     array = [0,0]
     tens = int(minute / 10)
@@ -183,16 +197,16 @@ def i2cMessage(minute: int,flush:list)->bytearray: # flush[0] flushes both digit
 ### fill/drain timer lookups #################################################################################
 
 fillTimer = {
-    0:10,
-    1:10,
-    2:10,
-    3:10,
-    4:10,
-    5:10,
-    6:10,
-    7:10,
-    8:10,
-    9:10,
+    0:2.6,
+    1:2.6,
+    2:2.6,
+    3:2.6,
+    4:2.6,
+    5:2.6,
+    6:2.6,
+    7:2.6,
+    8:2.6,
+    9:2.6,
 }
 
 drainTimer = {

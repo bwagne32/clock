@@ -73,19 +73,107 @@ while(I2C_ENABLE and len(devices) < 1):
     if DEBUG: print("Still searching for devices")
     sleep(1)
     
-    
+lastTens = -1
+lastOnes = -1
+lastMinute = -1
 async def i2cOutput(minute, sec):
+    global lastMinute
+    global lastTens
+    global lastOnes
+    
     if DEBUG: print("Background i2c task")        
+    from lookup import actualTable
 
     flush = [False, False]
     
-    if minute == 9 and sec > (60 - (drainTimer[int(minute/10)] + drainTimer[int(minute%10)]) / 2): 
+    if minute % 10 == 9 and sec > 60-15: 
         flush = [True,True]                                                             # Flush tens and ones places
-    elif sec > 60 - drainTimer[minute%10]: 
+        try:
+            acks = i2c.writeto(tentacle, bytearray([128,128]))
+        except:
+            pass
+    elif sec > 60 - 15: 
         flush[1] = True                                                                 # Flush ones place
+        try:
+            acks = i2c.writeto(tentacle, bytearray([0,128]))
+        except:
+            pass
+        
     
+    elif lastMinute != minute:
+        tempOnes = 0
+        tempTens = 0
+        if lastTens != int(minute / 10):
+            tempTens = actualTable[int(minute / 10)]
+            lastTens = int(minute / 10)
+        if lastOnes != minute % 10:
+            tempOnes = actualTable[minute % 10]
+            lastOnes = minute % 10
+            
+        i2cConvert = bytearray([tempTens, tempOnes])
+
+        try:
+            acks = i2c.writeto(tentacle, i2cConvert)
+        except:
+            pass
+        
+        sleep(.75 * (fillTimer[int(minute/10)] + fillTimer[int(minute%10)]))
+
+        try:
+            acks = i2c.writeto(tentacle, bytearray([0,0]))
+        except:
+            pass
+        
+        '''
+        if minute % 10 == 0:
+            tempOnes = actualTable[minute % 10]
+            tempTens = actualTable[int(minute / 10)]
+            i2cConvert = bytearray([tempTens, tempOnes])
+            
+            try:
+                acks = i2c.writeto(tentacle, i2cConvert)
+            except:
+                pass
+            
+            sleep((fillTimer[int(minute/10)] + fillTimer[int(minute%10)]) / 2)
+
+            try:
+                acks = i2c.writeto(tentacle, bytearray([0,0]))
+            except:
+                pass
+        else:
+            tempOnes = actualTable[minute % 10]
+            tempTens = 0
+            i2cConvert = bytearray([tempTens, tempOnes])
+            
+            try:
+                acks = i2c.writeto(tentacle, i2cConvert)
+            except:
+                pass
+            
+            
+            sleep((fillTimer[int(minute/10)] + fillTimer[int(minute%10)]) / 2)
+
+            try:
+                acks = i2c.writeto(tentacle, bytearray([0,0]))
+            except:
+                pass
+    
+        
+        
+        lastMinute = minute
+    
+    return
+'''
+
+    
+    '''
     try:
-        acks = i2c.writeto(tentacle,i2cMessage(minute,flush))
+        if not flush[0]:
+            i2cConvert = bytearray([actualTable[command],actualTable[command]])
+        elif:
+            acks = i2c.writeto(tentacle, i2cConvert)
+
         if DEBUG: print(f"Sent: {minute}\nReceived: {acks}") 
     except:                                                                             # so the controller doesn't crash
         if DEBUG: print("i2c failed")
@@ -97,7 +185,7 @@ async def i2cOutput(minute, sec):
             if DEBUG: print(f"Sent close command. Acks: ") 
         except:                                                                         # so the controller doesn't crash
             if DEBUG: print("i2c failed")
-        
+        '''
 
 
 
@@ -106,7 +194,6 @@ async def i2cOutput(minute, sec):
 async def main() -> None:
     await syncTime()
     asyncio.create_task(autoCalibrate())
-        
     while(True):
         hour, minute, sec = time.localtime()[3:6]
         
@@ -132,7 +219,7 @@ async def main() -> None:
         
         if DEBUG: print(f"{hour}:{minute}")        
         
-        asyncio.create_task(i2cOutput(minute, sec))
+        await i2cOutput(minute, sec)
             
         output.writeOutput(hour,minute,sec)
         
