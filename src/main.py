@@ -86,29 +86,35 @@ async def i2cOutput(minute, sec):
 
     flush = [False, False]
     
-    if minute % 10 == 9 and sec > 60-15: 
+    '''if minute % 10 == 9 and sec > 60-20: 
         flush = [True,True]                                                             # Flush tens and ones places
         try:
             acks = i2c.writeto(tentacle, bytearray([128,128]))
         except:
             pass
-    elif sec > 60 - 15: 
+    elif sec > 60 - 20: 
         flush[1] = True                                                                 # Flush ones place
         try:
             acks = i2c.writeto(tentacle, bytearray([0,128]))
         except:
             pass
+        '''
+    if sec > 60 - 20: 
+        flush[1] = True                                                                 # Flush ones place
+        try:
+            acks = i2c.writeto(tentacle, bytearray([128,128]))
+        except:
+            pass
         
-    
     elif lastMinute != minute:
         tempOnes = 0
         tempTens = 0
-        if lastTens != int(minute / 10):
-            tempTens = actualTable[int(minute / 10)]
-            lastTens = int(minute / 10)
-        if lastOnes != minute % 10:
-            tempOnes = actualTable[minute % 10]
-            lastOnes = minute % 10
+        #if lastTens != int(minute / 10):
+        tempTens = actualTable[int(minute / 10)]
+        lastTens = int(minute / 10)
+        #if lastOnes != minute % 10:
+        tempOnes = actualTable[minute % 10]
+        lastOnes = minute % 10
             
         i2cConvert = bytearray([tempTens, tempOnes])
 
@@ -117,12 +123,17 @@ async def i2cOutput(minute, sec):
         except:
             pass
         
-        sleep(.75 * (fillTimer[int(minute/10)] + fillTimer[int(minute%10)]))
+        if fillTimer[int(minute/10)] > fillTimer[minute%10]: sleep(fillTimer[int(minute/10)])
+        else: sleep(fillTimer[int(minute%10)])
+
 
         try:
             acks = i2c.writeto(tentacle, bytearray([0,0]))
         except:
             pass
+        
+        lastMinute = minute
+        
         
         '''
         if minute % 10 == 0:

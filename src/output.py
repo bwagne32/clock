@@ -29,14 +29,14 @@ def writeOutput(hour: int, minute: int,sec:int) -> None: # In testing while segm
             tempTens = tensTable[int(hour / 10)]
             tens.out(tempTens)
             
-            sleep(3)                                                          # Needs to be done simultaneously 
+            sleep(fillTimer[hour % 10])                                                          # Needs to be done simultaneously 
             ones.close()
-            sleep(12)
+            sleep(8)
             tens.close()
         else: 
             tempOnes = onesTable[hour % 10]
             ones.out(tempOnes)
-            sleep(3.25)
+            sleep(fillTimer[hour % 10] + 1)
         ones.close()
         tens.close()
         lastHour = hour
