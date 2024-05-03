@@ -19,6 +19,7 @@ def writeOutput(hour: int, minute: int,sec:int) -> None: # In testing while segm
     elif(minute == 59) and (sec > 60 - drainTimer[hour % 10]):                                      # Flush ones digit
         if DEBUG: print("Flushing ones segment")
         ones.flush()
+        tens.close()
     
     
     if(lastHour != hour):                                                                         # Filling condition
@@ -37,10 +38,12 @@ def writeOutput(hour: int, minute: int,sec:int) -> None: # In testing while segm
             tempOnes = onesTable[hour % 10]
             ones.out(tempOnes)
             sleep(fillTimer[hour % 10] + 1)
+            tens.close()
         ones.close()
         tens.close()
         lastHour = hour
-
+        tens.close()
+        tens.out([0,0,0,0,0,0,0,0])
             
             
             

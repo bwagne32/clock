@@ -203,6 +203,10 @@ async def i2cOutput(minute, sec):
 
 ## Main ##################################################################################################################
 async def main() -> None:
+    from output import tens,ones
+    tens.flush()
+    ones.flush()
+    sleep(20)
     await syncTime()
     asyncio.create_task(autoCalibrate())
     while(True):

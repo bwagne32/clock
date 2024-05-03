@@ -1,7 +1,7 @@
 
 from machine import Pin
 
-DEBUG = True
+DEBUG = False
 
 ### Output.py ###########################################################################
 
