@@ -6,7 +6,7 @@ import ntp
 import machine
 import uasyncio as asyncio
 import output
-from output import leaking, dontLeak, fillTimer, drainTimer
+from output import writeHours, leaking, dontLeak, fillTimer, drainTimer
 from lookup import i2cMessage, DEBUG
 import uping
 
@@ -45,7 +45,7 @@ async def autoCalibrate():
             print("done")
             print(time.localtime())
         timeChange(daylightSavings)
-        await asyncio.sleep(700) # sleeps task for a while
+        await asyncio.sleep(60*60*24) # sleeps task for a while
 
 def timeChange(dayLightSavings) -> bool: # True if daylight savings else false
     # EDT -> daylight savings starts last sunday in march (3)
@@ -73,130 +73,54 @@ while(I2C_ENABLE and len(devices) < 1):
     if DEBUG: print("Still searching for devices")
     sleep(1)
     
-lastTens = -1
-lastOnes = -1
-lastMinute = -1
-async def i2cOutput(minute, sec):
-    global lastMinute
-    global lastTens
-    global lastOnes
-    
-    if DEBUG: print("Background i2c task")        
-    from lookup import actualTable
-
-    flush = [False, False]
-    
-    '''if minute % 10 == 9 and sec > 60-20: 
-        flush = [True,True]                                                             # Flush tens and ones places
-        try:
-            acks = i2c.writeto(tentacle, bytearray([128,128]))
-        except:
-            pass
-    elif sec > 60 - 20: 
-        flush[1] = True                                                                 # Flush ones place
-        try:
-            acks = i2c.writeto(tentacle, bytearray([0,128]))
-        except:
-            pass
-        '''
-    if sec > 60 - 30: 
-        flush[1] = True                                                                 # Flush ones place
-        try:
-            acks = i2c.writeto(tentacle, bytearray([128,128]))
-        except:
-            pass
-        
-    elif lastMinute != minute:
-        tempOnes = 0
-        tempTens = 0
-        #if lastTens != int(minute / 10):
-        tempTens = actualTable[int(minute / 10)]
-        lastTens = int(minute / 10)
-        #if lastOnes != minute % 10:
-        tempOnes = actualTable[minute % 10]
-        lastOnes = minute % 10
-            
-        i2cConvert = bytearray([tempTens, tempOnes])
-
-        try:
-            acks = i2c.writeto(tentacle, i2cConvert)
-        except:
-            pass
-        
-        if fillTimer[int(minute/10)] > fillTimer[minute%10]: sleep(fillTimer[int(minute/10)])
-        else: sleep(fillTimer[int(minute%10)])
-
-
-        try:
-            acks = i2c.writeto(tentacle, bytearray([0,0]))
-        except:
-            pass
-        
-        lastMinute = minute
-        
-        
-        '''
-        if minute % 10 == 0:
-            tempOnes = actualTable[minute % 10]
-            tempTens = actualTable[int(minute / 10)]
-            i2cConvert = bytearray([tempTens, tempOnes])
-            
-            try:
-                acks = i2c.writeto(tentacle, i2cConvert)
-            except:
-                pass
-            
-            sleep((fillTimer[int(minute/10)] + fillTimer[int(minute%10)]) / 2)
-
-            try:
-                acks = i2c.writeto(tentacle, bytearray([0,0]))
-            except:
-                pass
-        else:
-            tempOnes = actualTable[minute % 10]
-            tempTens = 0
-            i2cConvert = bytearray([tempTens, tempOnes])
-            
-            try:
-                acks = i2c.writeto(tentacle, i2cConvert)
-            except:
-                pass
-            
-            
-            sleep((fillTimer[int(minute/10)] + fillTimer[int(minute%10)]) / 2)
-
-            try:
-                acks = i2c.writeto(tentacle, bytearray([0,0]))
-            except:
-                pass
-    
-        
-        
-        lastMinute = minute
-    
-    return
 '''
+Flush states
+0 -> flush only
+1 -> flush & write
+2 -> write only
+3 -> close all
+'''
+async def i2cOutput(minute:int, flush:int) -> bool:    # returns with success boolean
+    from lookup import actualTable
+    match flush:
+        case 0: # Flush only
+            try:
+                acks = i2c.writeto(tentacle, bytearray([128,128]))
+                return True
+            except:
+                return False
+        case 1: # Flush & Fill
+            tempTens = actualTable[int(minute / 10)]
+            tempOnes = actualTable[minute % 10]
+            
+            i2cByte = bytearray([tempTens + 128, tempOnes + 128])
 
+            try:
+                acks = i2c.writeto(tentacle, i2cByte)
+                return True
+            except:
+                return False
+        case 2: # Write only
+            tempTens = actualTable[int(minute / 10)]
+            tempOnes = actualTable[minute % 10]
+            
+            i2cByte = bytearray([tempTens, tempOnes])
+
+            try:
+                acks = i2c.writeto(tentacle, i2cByte)
+                return True
+            except:
+                return False
+        case 3: # Close all
+            try:
+                acks = i2c.writeto(tentacle, bytearray([0,0]))
+                return True
+            except:
+                return False
+        
     
-    '''
-    try:
-        if not flush[0]:
-            i2cConvert = bytearray([actualTable[command],actualTable[command]])
-        elif:
-            acks = i2c.writeto(tentacle, i2cConvert)
-
-        if DEBUG: print(f"Sent: {minute}\nReceived: {acks}") 
-    except:                                                                             # so the controller doesn't crash
-        if DEBUG: print("i2c failed")
-
-    if not flush[1]:                                                                    # leave open for fill timer if not in flushing phase
-        asyncio.sleep((fillTimer[int(minute/10)] + fillTimer[int(minute%10)]) / 2)
-        try:
-            acks = i2c.writeto(tentacle,bytearray([0,0]))                               # closing all solenoids
-            if DEBUG: print(f"Sent close command. Acks: ") 
-        except:                                                                         # so the controller doesn't crash
-            if DEBUG: print("i2c failed")
-        '''
+        
+        
 
 
 
@@ -206,14 +130,16 @@ async def main() -> None:
     from output import tens,ones
     tens.flush()
     ones.flush()
-    sleep(20)
+    await i2cOutput(0,0)
     await syncTime()
     asyncio.create_task(autoCalibrate())
+    asyncio.sleep(20)
+
     while(True):
         hour, minute, sec = time.localtime()[3:6]
         
         
-            
+        ## Hour processing
         if daylightSavings:
             if (hour - 5 < 0):
                 hour = 24 - (5 - hour)
@@ -225,25 +151,95 @@ async def main() -> None:
             else:
                 hour -= 4
         
-        
-        
         if hour > 12: hour -= 12 # PM
         elif hour == 0: hour = 12 # incase midnight is treated as 0
         
-        
-        
         if DEBUG: print(f"{hour}:{minute}")        
         
-        await i2cOutput(minute, sec)
+        ## Outputting
+        '''
+        Flush states
+        0 -> Flush only
+        1 -> flush & write
+        2 -> Write only
+        3 -> close all
+        '''
+        ## Hour change + minute change
+        if (minute == 59) and (sec > 60 - drainTimer):
+            if hour == 12: hour = 1
+            else: hour += 1
             
-        output.writeOutput(hour,minute,sec)
+            stage = 0
+            # Full flush
+            await i2cOutput(minute,stage)
+            await writeHours(hour,stage)
+            asyncio.sleep(drainTimer * 2 / 3)
+            stage += 1
+            # Flush & Fill
+            await i2cOutput(minute,stage)
+            await writeHours(hour,stage)
+            asyncio.sleep(drainTimer * 1 / 3)
+            stage += 1
+            # Finish Fill
+            await i2cOutput(minute,stage)
+            await writeHours(hour,stage)
+            asyncio.sleep(4)                    # needs tested
+            stage += 1
+            # Close
+            await i2cOutput(minute,stage)
+            await writeHours(hour,stage)
+            asyncio.sleep(10)                   # making sure to pause to not output more than once per iteration
+        
+        ## Hours refresh + minutes refresh
+        elif ((minute+1) % 15 == 0) and (sec > 60 - drainTimer): 
+            stage = 0
+            # Full flush
+            await i2cOutput(minute,stage)
+            await writeHours(hour,stage)
+            asyncio.sleep(drainTimer * 2 / 3)
+            stage += 1
+            # Flush & Fill
+            await i2cOutput(minute,stage)
+            await writeHours(hour,stage)
+            asyncio.sleep(drainTimer * 1 / 3)
+            stage += 1
+            # Finish Fill
+            await i2cOutput(minute,stage)
+            await writeHours(hour,stage)
+            asyncio.sleep(4)                    # needs tested
+            stage += 1
+            # Close
+            await i2cOutput(minute,stage)
+            await writeHours(hour,stage)
+            asyncio.sleep(10)                   # making sure to pause to not output more than once per iteration
+        
+        ## Minutes refreh
+        elif (sec > 60 - drainTimer):          
+            stage = 0
+            # Full flush
+            await i2cOutput(minute,stage)
+            asyncio.sleep(drainTimer * 2 / 3)
+            stage += 1
+            # Flush & Fill
+            await i2cOutput(minute,stage)
+            asyncio.sleep(drainTimer * 1 / 3)
+            stage += 1
+            # Finish Fill
+            await i2cOutput(minute,stage)
+            asyncio.sleep(4)                    # needs tested
+            stage += 1
+            # Close
+            await i2cOutput(minute,stage)
+            asyncio.sleep(10)                   # making sure to pause to not output more than once per iteration
+           
+        
         
         
         
         if leaking():   # Water proofing
             dontLeak()
             
-        sleep(1)
+        await asyncio.sleep(.5)
 
 
 

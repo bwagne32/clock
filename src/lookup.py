@@ -9,7 +9,8 @@ tensPins = [3,2]                    # segment 1 in segment control order
 onesPins = [11,10,9,8,4,5,6,7]      # segment 2 in segment control order
 
 class segment:
-    def __init__(self,seg1="LED",seg2="LED",seg3="LED",seg4="LED",seg5="LED",seg6="LED",seg7="LED",flush="LED"):
+    def __init__(self,seg1="LED",seg2="LED",seg3="LED",seg4="LED",seg5="LED",seg6="LED",seg7="LED",flush="LED", name):
+        self._name_ = name
         self.S1 = Pin(seg1,Pin.OUT)
         self.S2 = Pin(seg2,Pin.OUT)
         self.S3 = Pin(seg3,Pin.OUT)
@@ -18,7 +19,7 @@ class segment:
         self.S6 = Pin(seg6,Pin.OUT)
         self.S7 = Pin(seg7,Pin.OUT)
         self.S8 = Pin(flush,Pin.OUT) # Flush
-        if DEBUG: print([self.S1, self.S2,self.S3,self.S4,self.S5,self.S6,self.S7,self.S8])
+        if DEBUG: print([self._name_,self.S1, self.S2,self.S3,self.S4,self.S5,self.S6,self.S7,self.S8])
         
     def out(self,array:list):       # For filling segments only
         self.S1.value(array[0])
@@ -29,9 +30,20 @@ class segment:
         self.S6.value(array[5])
         self.S7.value(array[6])
         self.S8.off()               # Should not be flushing
-        if DEBUG: print(f"Wrote: {array}")
-        
-    def flush(self):                # Flushes all segments
+        if DEBUG: print(f"Wrote: {array} to {self._name_}")
+    
+    def flushAndFill(self,array:list):
+        self.S1.value(array[0])
+        self.S2.value(array[1])
+        self.S3.value(array[2])
+        self.S4.value(array[3])
+        self.S5.value(array[4])
+        self.S6.value(array[5])
+        self.S7.value(array[6])
+        self.S8.on()               
+        if DEBUG: print(f"Wrote: {array} and flush to {self._name_}")
+     
+    def flush(self):                # Closes all fills and opens flush
         self.S1.off()
         self.S2.off()
         self.S3.off()
@@ -40,8 +52,9 @@ class segment:
         self.S6.off()
         self.S7.off()
         self.S8.on()
+        if DEBUG: print(f"Flushed {self._name_}")
     
-    def close(self):
+    def close(self):                # Closes all segments
         self.S1.off()
         self.S2.off()
         self.S3.off()
@@ -50,6 +63,8 @@ class segment:
         self.S6.off()
         self.S7.off()
         self.S8.off()
+        if DEBUG: print(f"Closed {self._name_}")
+
 
 '''
     --1--
@@ -209,7 +224,10 @@ fillTimer = {
     9:3.5,
 }
 
-drainTimer = {
+drainTimer = 10     # Mostly for minutes. Hours drain time is increased at use
+
+'''
+drainTimer = { # old drain timer style
     0:15,
     1:15,
     2:15,
@@ -221,3 +239,4 @@ drainTimer = {
     8:15,
     9:15,
 }
+'''
