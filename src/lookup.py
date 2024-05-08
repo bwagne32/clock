@@ -1,7 +1,7 @@
 
 from machine import Pin
 
-DEBUG = False
+DEBUG = True
 
 ### Output.py ###########################################################################
 
@@ -9,7 +9,7 @@ tensPins = [3,2]                    # segment 1 in segment control order
 onesPins = [11,10,9,8,4,5,6,7]      # segment 2 in segment control order
 
 class segment:
-    def __init__(self,seg1="LED",seg2="LED",seg3="LED",seg4="LED",seg5="LED",seg6="LED",seg7="LED",flush="LED", name):
+    def __init__(self,seg1="LED",seg2="LED",seg3="LED",seg4="LED",seg5="LED",seg6="LED",seg7="LED",flush="LED", name="name"):
         self._name_ = name
         self.S1 = Pin(seg1,Pin.OUT)
         self.S2 = Pin(seg2,Pin.OUT)
@@ -224,7 +224,7 @@ fillTimer = {
     9:3.5,
 }
 
-drainTimer = 10     # Mostly for minutes. Hours drain time is increased at use
+drainTimer = 15     # Mostly for minutes. Hours drain time is increased at use
 
 '''
 drainTimer = { # old drain timer style

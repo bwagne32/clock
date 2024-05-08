@@ -19,34 +19,33 @@ Flush states
 '''
 async def writeHours(hour:int, flush:int) -> bool: # In testing while segment control is finalized
     
-    match flush:
-        case 0: # Flush only
-            ones.flush()
-            tens.flush()
-            return True
-        
-        case 1: # Flush & Fill
-            tempOnes = onesTable[hour % 10]
-            ones.flushAndFill(tempOnes)
-            if hour > 9:
-                tempTens = tensTable[int(hour / 10)]
-                tens.flushAndFill(tempTens)
-            else: tens.flush()
-            return True
-        
-        case 2: # Write only
-            tempOnes = onesTable[hour % 10]
-            ones.out(tempOnes)
-            if hour > 9:
-                tempTens = tensTable[int(hour / 10)]
-                tens.out(tempTens)
-            else: tens.flush()
-            return True
-        
-        case 3: # Close all
-            ones.close()
-            tens.close()
+    if flush == 0: # Flush only
+        ones.flush()
+        tens.flush()
+        return True
     
+    elif flush == 1: # Flush & Fill
+        tempOnes = onesTable[hour % 10]
+        ones.flushAndFill(tempOnes)
+        if hour > 9:
+            tempTens = tensTable[int(hour / 10)]
+            tens.flushAndFill(tempTens)
+        else: tens.flush()
+        return True
+    
+    elif flush == 2: # Write only
+        tempOnes = onesTable[hour % 10]
+        ones.out(tempOnes)
+        if hour > 9:
+            tempTens = tensTable[int(hour / 10)]
+            tens.out(tempTens)
+        else: tens.flush()
+        return True
+    
+    elif flush == 3: # Close all
+        ones.close()
+        tens.close()
+
     return False
         
     

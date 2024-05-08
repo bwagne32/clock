@@ -44,10 +44,10 @@ async def autoCalibrate():
         if DEBUG:
             print("done")
             print(time.localtime())
-        timeChange(daylightSavings)
+        await timeChange(daylightSavings)
         await asyncio.sleep(60*60*24) # sleeps task for a while
 
-def timeChange(dayLightSavings) -> bool: # True if daylight savings else false
+async def timeChange(dayLightSavings) -> bool: # True if daylight savings else false
     # EDT -> daylight savings starts last sunday in march (3)
     # EST -> standard starts last sunday in october (10)
     # (year, month, mday, hour, minute, second, weekday, yearday)
@@ -80,47 +80,41 @@ Flush states
 2 -> write only
 3 -> close all
 '''
-async def i2cOutput(minute:int, flush:int) -> bool:    # returns with success boolean
+async def i2cOutput(minute:int, flush:int):    # returns with success boolean
     from lookup import actualTable
-    match flush:
-        case 0: # Flush only
-            try:
-                acks = i2c.writeto(tentacle, bytearray([128,128]))
-                return True
-            except:
-                return False
-        case 1: # Flush & Fill
-            tempTens = actualTable[int(minute / 10)]
-            tempOnes = actualTable[minute % 10]
-            
-            i2cByte = bytearray([tempTens + 128, tempOnes + 128])
-
-            try:
-                acks = i2c.writeto(tentacle, i2cByte)
-                return True
-            except:
-                return False
-        case 2: # Write only
-            tempTens = actualTable[int(minute / 10)]
-            tempOnes = actualTable[minute % 10]
-            
-            i2cByte = bytearray([tempTens, tempOnes])
-
-            try:
-                acks = i2c.writeto(tentacle, i2cByte)
-                return True
-            except:
-                return False
-        case 3: # Close all
-            try:
-                acks = i2c.writeto(tentacle, bytearray([0,0]))
-                return True
-            except:
-                return False
+    if flush == 0: # Flush only
+        try:
+            i2c.writeto(tentacle, bytearray([128,128]))
+        except:
+            pass
+    elif flush == 1: # Flush & Fill
+        tempTens = actualTable[int(minute / 10)]
+        tempOnes = actualTable[minute % 10]
         
+        i2cByte = bytearray([tempTens + 128, tempOnes + 128])
+
+        try:
+            i2c.writeto(tentacle, i2cByte)
+        except:
+            pass
+    elif flush == 2: # Write only
+        tempTens = actualTable[int(minute / 10)]
+        tempOnes = actualTable[minute % 10]
+        
+        i2cByte = bytearray([tempTens, tempOnes])
+
+        try:
+            i2c.writeto(tentacle, i2cByte)
+        except:
+            pass
+    elif flush == 3: # Close all
+        try:
+            i2c.writeto(tentacle, bytearray([0,0]))
+        except:
+            pass
+
     
-        
-        
+    
 
 
 
@@ -133,10 +127,55 @@ async def main() -> None:
     await i2cOutput(0,0)
     await syncTime()
     asyncio.create_task(autoCalibrate())
-    asyncio.sleep(20)
+    await asyncio.sleep(drainTimer*.5)
+    
+    hour, minute, sec = time.localtime()[3:6]
+    
+    if daylightSavings:
+        if (hour - 5 < 0):
+            hour = 24 - (5 - hour)
+        else:
+            hour -= 5
+    else:
+        if (hour - 4 < 0):
+            hour = 24 - (4 - hour)
+        else:
+            hour -= 4
+    
+        
+        
+    if hour > 12: hour -= 12 # PM
+    elif hour == 0: hour = 12 # incase midnight is treated as 0
+        
+    
+    stage = 0
+    # Full flush
+    await i2cOutput(minute,stage)
+    await writeHours(hour,stage)
+    await asyncio.sleep(drainTimer)
+    stage += 1
+    # Flush & Fill
+    
+    await i2cOutput(minute,stage)
+    await writeHours(hour,stage)
+    await asyncio.sleep(drainTimer * 1 / 2)
+    
+    stage += 1
+    # Finish Fill
+    await i2cOutput(minute,stage)
+    await writeHours(hour,stage)
+    await asyncio.sleep(4)                    # needs tested
+    stage += 1
+    # Close
+    await i2cOutput(minute,stage)
+    await asyncio.sleep(5) # hours take longer to fill
+    await writeHours(hour,stage)
+    await asyncio.sleep(10)                   # making sure to pause to not output more than once per iteration
+
 
     while(True):
         hour, minute, sec = time.localtime()[3:6]
+        
         
         
         ## Hour processing
@@ -168,69 +207,85 @@ async def main() -> None:
         if (minute == 59) and (sec > 60 - drainTimer):
             if hour == 12: hour = 1
             else: hour += 1
+            if minute == 59: minute = 0
+            else: minute = minute + 1
             
             stage = 0
             # Full flush
             await i2cOutput(minute,stage)
             await writeHours(hour,stage)
-            asyncio.sleep(drainTimer * 2 / 3)
+            await asyncio.sleep(drainTimer)
             stage += 1
             # Flush & Fill
+            
             await i2cOutput(minute,stage)
             await writeHours(hour,stage)
-            asyncio.sleep(drainTimer * 1 / 3)
+            await asyncio.sleep(drainTimer * 1 / 2)
+            
             stage += 1
             # Finish Fill
             await i2cOutput(minute,stage)
             await writeHours(hour,stage)
-            asyncio.sleep(4)                    # needs tested
+            await asyncio.sleep(4)                    # needs tested
             stage += 1
             # Close
             await i2cOutput(minute,stage)
+            await asyncio.sleep(5) # hours take longer to fill
             await writeHours(hour,stage)
-            asyncio.sleep(10)                   # making sure to pause to not output more than once per iteration
+            await asyncio.sleep(10)                   # making sure to pause to not output more than once per iteration
         
         ## Hours refresh + minutes refresh
         elif ((minute+1) % 15 == 0) and (sec > 60 - drainTimer): 
+            if minute == 59: minute = 0
+            else: minute = minute + 1
+            
             stage = 0
             # Full flush
             await i2cOutput(minute,stage)
             await writeHours(hour,stage)
-            asyncio.sleep(drainTimer * 2 / 3)
+            await asyncio.sleep(drainTimer)
             stage += 1
             # Flush & Fill
+            
             await i2cOutput(minute,stage)
             await writeHours(hour,stage)
-            asyncio.sleep(drainTimer * 1 / 3)
+            await asyncio.sleep(drainTimer * 1 / 3)
+            
             stage += 1
             # Finish Fill
             await i2cOutput(minute,stage)
             await writeHours(hour,stage)
-            asyncio.sleep(4)                    # needs tested
+            await asyncio.sleep(4)                    # needs tested
             stage += 1
             # Close
             await i2cOutput(minute,stage)
+            await asyncio.sleep(5) # hours take longer to fill
             await writeHours(hour,stage)
-            asyncio.sleep(10)                   # making sure to pause to not output more than once per iteration
+            await asyncio.sleep(10)                   # making sure to pause to not output more than once per iteration
         
         ## Minutes refreh
-        elif (sec > 60 - drainTimer):          
+        elif (sec > 60 - drainTimer):      
+            if minute == 59: minute = 0
+            else: minute = minute + 1
+                
             stage = 0
             # Full flush
+            
             await i2cOutput(minute,stage)
-            asyncio.sleep(drainTimer * 2 / 3)
+            await asyncio.sleep(drainTimer)
+            
             stage += 1
             # Flush & Fill
             await i2cOutput(minute,stage)
-            asyncio.sleep(drainTimer * 1 / 3)
+            await asyncio.sleep(drainTimer * 1 / 2)
             stage += 1
             # Finish Fill
             await i2cOutput(minute,stage)
-            asyncio.sleep(4)                    # needs tested
+            await asyncio.sleep(4)                    # needs tested
             stage += 1
             # Close
             await i2cOutput(minute,stage)
-            asyncio.sleep(10)                   # making sure to pause to not output more than once per iteration
+            await asyncio.sleep(10)                   # making sure to pause to not output more than once per iteration
            
         
         
@@ -259,6 +314,6 @@ except KeyboardInterrupt:
     pass # This was annoying me so now it's gone
     #machine.reset()    
 
-#if DEBUG: uping.ping(host='10.128.10.30',count=3) # Test if NTP server is reachable
+if DEBUG: uping.ping(host='10.128.10.30',count=3) # Test if NTP server is reachable
 if DEBUG: sleep(1)
 asyncio.run(main())
