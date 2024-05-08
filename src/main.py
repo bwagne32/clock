@@ -220,7 +220,7 @@ async def main() -> None:
             
             await i2cOutput(minute,stage)
             await writeHours(hour,stage)
-            await asyncio.sleep(drainTimer * 1 / 2)
+            await asyncio.sleep(drainTimer * 3/4)
             
             stage += 1
             # Finish Fill
@@ -249,7 +249,7 @@ async def main() -> None:
             
             await i2cOutput(minute,stage)
             await writeHours(hour,stage)
-            await asyncio.sleep(drainTimer * 1 / 3)
+            await asyncio.sleep(drainTimer * 3/4)
             
             stage += 1
             # Finish Fill
@@ -277,7 +277,7 @@ async def main() -> None:
             stage += 1
             # Flush & Fill
             await i2cOutput(minute,stage)
-            await asyncio.sleep(drainTimer * 1 / 2)
+            await asyncio.sleep(drainTimer * 3 / 4)
             stage += 1
             # Finish Fill
             await i2cOutput(minute,stage)
