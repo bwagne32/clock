@@ -155,11 +155,11 @@ async def main() -> None:
     await asyncio.sleep(drainTimer)
     stage += 1
     # Flush & Fill
-    
+    '''
     await i2cOutput(minute,stage)
     await writeHours(hour,stage)
     await asyncio.sleep(drainTimer * 1 / 2)
-    
+    '''
     stage += 1
     # Finish Fill
     await i2cOutput(minute,stage)
@@ -217,11 +217,11 @@ async def main() -> None:
             await asyncio.sleep(drainTimer)
             stage += 1
             # Flush & Fill
-            
+            '''
             await i2cOutput(minute,stage)
             await writeHours(hour,stage)
-            await asyncio.sleep(drainTimer * 3/4)
-            
+            await asyncio.sleep(drainTimer * 2/4)
+            '''
             stage += 1
             # Finish Fill
             await i2cOutput(minute,stage)
@@ -246,16 +246,16 @@ async def main() -> None:
             await asyncio.sleep(drainTimer)
             stage += 1
             # Flush & Fill
-            
+            '''
             await i2cOutput(minute,stage)
             await writeHours(hour,stage)
-            await asyncio.sleep(drainTimer * 3/4)
-            
+            await asyncio.sleep(drainTimer * 2/4)
+            '''
             stage += 1
             # Finish Fill
             await i2cOutput(minute,stage)
             await writeHours(hour,stage)
-            await asyncio.sleep(4)                    # needs tested
+            await asyncio.sleep(3)                    # needs tested
             stage += 1
             # Close
             await i2cOutput(minute,stage)
@@ -270,18 +270,18 @@ async def main() -> None:
                 
             stage = 0
             # Full flush
-            
             await i2cOutput(minute,stage)
             await asyncio.sleep(drainTimer)
-            
             stage += 1
             # Flush & Fill
+            '''
             await i2cOutput(minute,stage)
-            await asyncio.sleep(drainTimer * 3 / 4)
+            await asyncio.sleep(drainTimer * 2 / 4)
+            '''
             stage += 1
             # Finish Fill
             await i2cOutput(minute,stage)
-            await asyncio.sleep(4)                    # needs tested
+            await asyncio.sleep(3)                    # needs tested
             stage += 1
             # Close
             await i2cOutput(minute,stage)

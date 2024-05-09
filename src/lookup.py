@@ -224,7 +224,7 @@ fillTimer = {
     9:3.5,
 }
 
-drainTimer = 15     # Mostly for minutes. Hours drain time is increased at use
+drainTimer = 30     # Mostly for minutes. Hours drain time is increased at use
 
 '''
 drainTimer = { # old drain timer style
